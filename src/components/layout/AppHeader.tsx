@@ -1,4 +1,10 @@
-import { Pressable, View, StyleSheet } from 'react-native';
+import {
+  Image,
+  Pressable,
+  View,
+  StyleSheet,
+} from 'react-native';
+
 import { CircleUserRound, Bell } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,12 +14,14 @@ type AppHeaderProps = {
   onMenuPress?: () => void;
   onNotificationPress?: () => void;
   showNotifications?: boolean;
+  profilePhotoUri?: string | null;
 };
 
 export function AppHeader({
   onMenuPress,
   onNotificationPress,
   showNotifications = false,
+  profilePhotoUri,
 }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
 
@@ -31,11 +39,19 @@ export function AppHeader({
         style={styles.sideButton}
         hitSlop={8}
       >
-        <CircleUserRound
-          size={28}
-          color={colors.text}
-          strokeWidth={1.8}
-        />
+        {profilePhotoUri ? (
+          <Image
+            source={{ uri: profilePhotoUri }}
+            style={styles.profilePhoto}
+            accessibilityLabel="Foto de perfil do usuário"
+          />
+        ) : (
+          <CircleUserRound
+            size={28}
+            color={colors.text}
+            strokeWidth={1.8}
+          />
+        )}
       </Pressable>
 
       <View style={styles.spacer} />
@@ -89,6 +105,14 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  profilePhoto: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   spacer: {

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 import {
@@ -23,6 +22,7 @@ import { colors } from '../theme/colors';
 
 type AddCaseScreenProps = {
   userName: string;
+  userPhotoUri?: string | null;
   onBack: () => void;
   onSubmit: (newCase: AnimalCase) => void;
 };
@@ -33,6 +33,7 @@ const MAX_PHOTOS = 5;
 
 export default function AddCaseScreen({
   userName,
+  userPhotoUri,
   onBack,
   onSubmit,
 }: AddCaseScreenProps) {
@@ -143,8 +144,7 @@ export default function AddCaseScreen({
       images: imageUris.length > 0 ? imageUris : [fallbackImage],
       author: {
         name: userName.trim() || 'Usuário AMA',
-        imageUri:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+        imageUri: userPhotoUri || '',
       },
     };
 

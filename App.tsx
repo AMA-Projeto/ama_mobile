@@ -1,21 +1,30 @@
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import CaseDetailsScreen from './src/screens/CaseDetailsScreen';
-import { SuccessPopup } from './src/components/ui/SuccessPopup';
-import { ErrorPopup } from './src/components/ui/ErrorPopup';
-import { initialCases, AnimalCase } from './src/data/cases';
 import AddCaseScreen from './src/screens/AddCaseScreen';
 
-type Screen = 'login' | 'register' | 'home' | 'caseDetails' | 'addCase';
+import { SuccessPopup } from './src/components/ui/SuccessPopup';
+import { ErrorPopup } from './src/components/ui/ErrorPopup';
+
+import { initialCases, AnimalCase } from './src/data/cases';
+
+type Screen =
+  | 'login'
+  | 'register'
+  | 'home'
+  | 'caseDetails'
+  | 'addCase';
 
 type User = {
   name: string;
   email: string;
   phone: string;
   password: string;
+  photoUri?: string | null;
 };
 
 export default function App() {
@@ -24,6 +33,8 @@ export default function App() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [userName, setUserName] = useState('');
+  const [userPhotoUri, setUserPhotoUri] =
+    useState<string | null>(null);
 
   const [cases, setCases] =
     useState<AnimalCase[]>(initialCases);
@@ -63,6 +74,7 @@ export default function App() {
         ...data,
         email: normalizedEmail,
         phone: normalizedPhone,
+        photoUri: data.photoUri ?? null,
       },
     ]);
 
@@ -88,12 +100,15 @@ export default function App() {
     }
 
     setUserName(user.name);
+    setUserPhotoUri(user.photoUri ?? null);
     setCurrentScreen('home');
+
     return true;
   }
 
   function handleLogout() {
     setUserName('');
+    setUserPhotoUri(null);
     setSelectedCaseId(null);
     setCurrentScreen('login');
   }
@@ -117,7 +132,6 @@ export default function App() {
     setCurrentScreen('home');
   }
 
-  // Preparado para receber novos casos da futura tela de cadastro.
   function handleAddCase(newCase: AnimalCase) {
     setCases(currentCases => [newCase, ...currentCases]);
     setCurrentScreen('home');
@@ -161,6 +175,7 @@ export default function App() {
       {currentScreen === 'addCase' && (
         <AddCaseScreen
           userName={userName}
+          userPhotoUri={userPhotoUri}
           onBack={handleBackToHome}
           onSubmit={handleAddCase}
         />
