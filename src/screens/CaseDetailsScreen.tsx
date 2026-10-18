@@ -15,7 +15,6 @@ import {
 import {
   MapPin,
   Bookmark,
-  HandHeart,
   ChevronLeft,
   Navigation,
 } from 'lucide-react-native';
@@ -48,16 +47,11 @@ export default function CaseDetailsScreen({
   onMessagePress,
 }: CaseDetailsScreenProps) {
   const insets = useSafeAreaInsets();
-
   const [activeImage, setActiveImage] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Busca o caso na lista compartilhada pelo App.tsx.
-  const animalCase = cases.find(
-    item => item.id === caseId,
-  );
+  const animalCase = cases.find(item => item.id === caseId);
 
-  // Reinicia o carrossel e o estado de favorito ao trocar de caso.
   useEffect(() => {
     setActiveImage(0);
     setIsSaved(false);
@@ -70,10 +64,7 @@ export default function CaseDetailsScreen({
     const index = Math.round(offsetX / SCREEN_WIDTH);
 
     setActiveImage(
-      Math.max(
-        0,
-        Math.min(index, (animalCase?.images.length ?? 1) - 1),
-      ),
+      Math.max(0, Math.min(index, (animalCase?.images.length ?? 1) - 1)),
     );
   }
 
@@ -88,27 +79,18 @@ export default function CaseDetailsScreen({
 
   if (!animalCase) {
     return (
-      <View
-        style={[
-          styles.notFound,
-          { paddingTop: insets.top + 24 },
-        ]}
-      >
-        <Text style={styles.notFoundTitle}>
-          Caso não encontrado
-        </Text>
-
+      <View style={[styles.notFound, { paddingTop: insets.top + 24 }]}>
+        <Text style={styles.notFoundTitle}>Caso não encontrado</Text>
         <Text style={styles.notFoundDescription}>
           Não foi possível encontrar os detalhes deste animal.
         </Text>
-
-        <PrimaryButton
-          label="Voltar"
-          onPress={onBack ?? (() => {})}
-        />
+        <PrimaryButton label="Voltar" onPress={onBack ?? (() => {})} />
       </View>
     );
   }
+
+  const isUrgent =
+    animalCase.status.toLocaleLowerCase('pt-BR').includes('urgent');
 
   return (
     <View style={styles.screen}>
@@ -119,7 +101,6 @@ export default function CaseDetailsScreen({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Imagem de destaque */}
         <View style={styles.hero}>
           <ScrollView
             key={animalCase.id}
@@ -141,13 +122,7 @@ export default function CaseDetailsScreen({
             ))}
           </ScrollView>
 
-          {/* Barra superior */}
-          <View
-            style={[
-              styles.topBar,
-              { top: insets.top + 8 },
-            ]}
-          >
+          <View style={[styles.topBar, { top: insets.top + 8 }]}>
             <Pressable
               onPress={onBack ?? (() => {})}
               accessibilityRole="button"
@@ -155,159 +130,120 @@ export default function CaseDetailsScreen({
               hitSlop={8}
               style={styles.roundButton}
             >
-              <ChevronLeft
-                size={25}
-                color={colors.text}
-              />
+              <ChevronLeft size={25} color={colors.text} />
             </Pressable>
 
-            <Text style={styles.topBarTitle}>
-              Detalhes do caso
-            </Text>
+            <Text style={styles.topBarTitle}>Detalhes do caso</Text>
 
             <View style={styles.topBarRight}>
               <IconActionButton
                 icon={
                   <Bookmark
                     size={20}
-                    color={
-                      isSaved
-                        ? colors.primaryDark
-                        : colors.text
-                    }
-                    fill={
-                      isSaved
-                        ? colors.primary
-                        : 'transparent'
-                    }
+                    color={isSaved ? colors.primaryDark : colors.text}
+                    fill={isSaved ? colors.primary : 'transparent'}
                   />
                 }
-                onPress={() =>
-                  setIsSaved(current => !current)
-                }
-                accessibilityLabel={
-                  isSaved
-                    ? 'Remover dos salvos'
-                    : 'Salvar caso'
-                }
+                onPress={() => setIsSaved(current => !current)}
+                accessibilityLabel={isSaved ? 'Remover dos salvos' : 'Salvar caso'}
                 backgroundColor="#FFFFFF"
                 size={42}
               />
             </View>
           </View>
 
-          {/* Contador de fotos */}
-          <View style={styles.photoCounter}>
-            <Text style={styles.photoCounterText}>
-              {activeImage + 1} / {animalCase.images.length}
-            </Text>
-          </View>
+          {animalCase.images.length > 1 && (
+            <>
+              <View style={styles.pagination}>
+                {animalCase.images.map((_, index) => (
+                  <View
+                    key={`dot-${index}`}
+                    style={[
+                      styles.paginationDot,
+                      activeImage === index && styles.paginationDotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          )}
 
-          {/* Indicadores das fotos */}
-          <View style={styles.pagination}>
-            {animalCase.images.map((_, index) => (
-              <View
-                key={`dot-${index}`}
-                style={[
-                  styles.paginationDot,
-                  activeImage === index &&
-                    styles.paginationDotActive,
-                ]}
-              />
-            ))}
-          </View>
+          <View style={styles.imageBottomScrim} />
         </View>
 
-        {/* Painel de informações */}
         <View style={styles.detailsPanel}>
-          <View style={styles.panelHandle} />
-
           <View style={styles.statusRow}>
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>
+            <View
+              style={[
+                styles.statusBadge,
+                isUrgent ? styles.statusBadgeUrgent : styles.statusBadgeNormal,
+              ]}
+            >
+              <View
+                style={[
+                  styles.statusDot,
+                  isUrgent ? styles.statusDotUrgent : styles.statusDotNormal,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.statusText,
+                  isUrgent ? styles.statusTextUrgent : styles.statusTextNormal,
+                ]}
+              >
                 {animalCase.status}
               </Text>
             </View>
 
-            <Text style={styles.caseReference}>
-              Caso #{animalCase.id}
-            </Text>
+            <Text style={styles.caseReference}>Caso #{animalCase.id}</Text>
           </View>
 
-          <Text style={styles.title}>
-            {animalCase.title}
-          </Text>
+          <Text style={styles.title}>{animalCase.title}</Text>
 
-          {/* Localização */}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Consultar localização do animal"
-            onPress={() =>
-              console.log(
-                'Localização do caso:',
-                animalCase.location,
-              )
-            }
-            style={styles.locationRow}
+            onPress={() => console.log('Localização do caso:', animalCase.location)}
+            style={styles.locationCard}
           >
-            <MapPin
-              size={19}
-              color={colors.primaryDark}
-            />
+            <View style={styles.locationIconWrap}>
+              <MapPin size={20} color={colors.primaryDark} />
+            </View>
 
             <View style={styles.locationContent}>
-              <Text style={styles.locationText}>
-                {animalCase.location}
-              </Text>
-
-              <Text style={styles.distanceText}>
-                {animalCase.distance}
-              </Text>
+              <Text style={styles.locationEyebrow}>LOCALIZAÇÃO</Text>
+              <Text style={styles.locationText}>{animalCase.location}</Text>
+              <Text style={styles.distanceText}>{animalCase.distance}</Text>
             </View>
 
-            <Navigation
-              size={19}
-              color={colors.textSecondary}
-            />
+            <View style={styles.navigationButton}>
+              <Navigation size={17} color={colors.primaryDark} />
+            </View>
           </Pressable>
 
-          {/* Informações e tags do caso */}
-          <View style={styles.attributesCard}>
-            <Text style={styles.attributesTitle}>
-              Informações do animal
-            </Text>
-
-            <View style={styles.attributesGrid}>
-              {animalCase.tags.map(tag => (
-                <AnimalTag
-                  key={`${animalCase.id}-${tag}`}
-                  label={tag}
-                />
-              ))}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sobre o animal</Text>
+            <View style={styles.attributesCard}>
+              <Text style={styles.attributesSubtitle}>
+                Características identificadas
+              </Text>
+              <View style={styles.attributesGrid}>
+                {animalCase.tags.map(tag => (
+                  <AnimalTag key={`${animalCase.id}-${tag}`} label={tag} />
+                ))}
+              </View>
             </View>
           </View>
 
-          {/* Descrição */}
-          <View style={styles.descriptionSection}>
-            <Text style={styles.sectionTitle}>
-              Sobre o caso
-            </Text>
-
-            <ExpandableText
-              text={animalCase.description}
-              numberOfLines={4}
-            />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sobre o caso</Text>
+            <View style={styles.descriptionCard}>
+              <ExpandableText text={animalCase.description} numberOfLines={4} />
+            </View>
           </View>
 
-          <View style={styles.separator} />
-
-          {/* Responsável pela publicação */}
           <View style={styles.authorSection}>
-            <Text style={styles.sectionTitle}>
-              Responsável pelo caso
-            </Text>
-
+            <Text style={styles.sectionTitle}>Responsável pela publicação</Text>
             <CaseAuthorCard
               name={animalCase.author.name}
               imageUri={animalCase.author.imageUri}
@@ -315,30 +251,9 @@ export default function CaseDetailsScreen({
             />
           </View>
 
-          {/* Orientação para ajudar */}
-          <View style={styles.helpInfoCard}>
-            <View style={styles.helpIcon}>
-              <HandHeart
-                size={23}
-                color={colors.primaryDark}
-              />
-            </View>
-
-            <View style={styles.helpInfoText}>
-              <Text style={styles.helpInfoTitle}>
-                Faça parte da solução
-              </Text>
-
-              <Text style={styles.helpInfoDescription}>
-                Entre em contato para combinar a melhor forma
-                de ajudar este animal.
-              </Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
-      {/* Botão fixo */}
       <View
         style={[
           styles.bottomBar,
@@ -346,7 +261,7 @@ export default function CaseDetailsScreen({
         ]}
       >
         <PrimaryButton
-          label="Quero Ajudar"
+          label="Quero ajudar"
           onPress={handleHelp}
           style={styles.helpButton}
         />
@@ -360,31 +275,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-
   scroll: {
     flex: 1,
   },
-
   scrollContent: {
-    paddingBottom: 16,
+    paddingBottom: 0,
   },
-
   hero: {
-    height: 390,
+    height: 340,
     position: 'relative',
     backgroundColor: '#DDE8D7',
   },
-
   imageCarousel: {
     flex: 1,
   },
-
   heroImage: {
     width: SCREEN_WIDTH,
-    height: 390,
+    height: 340,
     backgroundColor: '#DDE8D7',
   },
-
+  imageBottomScrim: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 76,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    pointerEvents: 'none',
+  },
   topBar: {
     position: 'absolute',
     left: 18,
@@ -393,7 +311,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-
   roundButton: {
     width: 43,
     height: 43,
@@ -402,230 +319,193 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
   },
-
   topBarTitle: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
-    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowColor: 'rgba(0,0,0,0.55)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 5,
   },
-
   topBarRight: {
     width: 43,
     alignItems: 'flex-end',
   },
-
-  photoCounter: {
-    position: 'absolute',
-    right: 18,
-    bottom: 60,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-
-  photoCounterText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
   pagination: {
     position: 'absolute',
-    bottom: 27,
+    bottom: 29,
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 6,
+    zIndex: 2,
   },
-
   paginationDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
   },
-
   paginationDotActive: {
     width: 19,
     backgroundColor: colors.primary,
   },
-
   detailsPanel: {
-    marginTop: -34,
-    paddingTop: 13,
-    paddingHorizontal: 22,
-    paddingBottom: 28,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    marginTop: -24,
+    paddingTop: 25,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     backgroundColor: '#FFFFFF',
   },
-
-  panelHandle: {
-    alignSelf: 'center',
-    width: 38,
-    height: 4,
-    borderRadius: 3,
-    backgroundColor: '#E2E2E2',
-    marginBottom: 21,
-  },
-
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 9,
+    gap: 10,
+    marginBottom: 10,
   },
-
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
     borderRadius: 20,
+    maxWidth: '75%',
+  },
+  statusBadgeUrgent: {
     backgroundColor: '#FFF0EB',
   },
-
+  statusBadgeNormal: {
+    backgroundColor: '#EDF5E9',
+  },
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
+  },
+  statusDotUrgent: {
     backgroundColor: colors.danger,
   },
-
+  statusDotNormal: {
+    backgroundColor: colors.primaryDark,
+  },
   statusText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  statusTextUrgent: {
     color: colors.danger,
   },
-
+  statusTextNormal: {
+    color: colors.primaryDark,
+  },
   caseReference: {
     fontSize: 12,
     color: colors.textSecondary,
   },
-
   title: {
-    fontSize: 26,
-    lineHeight: 33,
+    fontSize: 27,
+    lineHeight: 34,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 17,
+    letterSpacing: -0.5,
   },
-
-  locationRow: {
+  locationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
-    paddingVertical: 13,
-    paddingHorizontal: 13,
-    borderRadius: 14,
+    gap: 12,
+    padding: 13,
+    borderRadius: 17,
     backgroundColor: colors.background,
-    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E9EDE6',
+    marginBottom: 25,
   },
-
+  locationIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   locationContent: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
-
+  locationEyebrow: {
+    fontSize: 9,
+    letterSpacing: 1,
+    fontWeight: '800',
+    color: colors.textSecondary,
+  },
   locationText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
     color: colors.text,
   },
-
   distanceText: {
     fontSize: 12,
     color: colors.textSecondary,
   },
-
-  attributesCard: {
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: '#F5F6F4',
-    marginBottom: 25,
+  navigationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  attributesTitle: {
-    fontSize: 15,
+  section: {
+    marginBottom: 24,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 13,
+    letterSpacing: -0.2,
   },
-
+  attributesCard: {
+    padding: 16,
+    borderRadius: 17,
+    backgroundColor: '#F6F7F4',
+    borderWidth: 1,
+    borderColor: '#ECEFE9',
+  },
+  attributesSubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 12,
+  },
   attributesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 9,
   },
-
-  descriptionSection: {
-    gap: 12,
-    marginBottom: 23,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-
-  separator: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginBottom: 22,
-  },
-
-  authorSection: {
-    gap: 13,
-    marginBottom: 22,
-  },
-
-  helpInfoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  descriptionCard: {
     padding: 15,
     borderRadius: 16,
-    backgroundColor: '#F0F7ED',
+    backgroundColor: '#FAFBF9',
     borderWidth: 1,
-    borderColor: '#E2EBDD',
+    borderColor: '#ECEFE9',
   },
-
-  helpIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+  authorSection: {
+    gap: 10,
+    marginBottom: 0,
   },
-
-  helpInfoText: {
-    flex: 1,
-    gap: 5,
-  },
-
-  helpInfoTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.text,
-  },
-
-  helpInfoDescription: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.textSecondary,
-  },
-
   bottomBar: {
     paddingHorizontal: 20,
-    paddingTop: 13,
+    paddingTop: 12,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#EEEEEE',
@@ -635,11 +515,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
   },
-
   helpButton: {
     width: '100%',
   },
-
   notFound: {
     flex: 1,
     justifyContent: 'center',
@@ -647,14 +525,12 @@ const styles = StyleSheet.create({
     gap: 16,
     backgroundColor: '#FFFFFF',
   },
-
   notFoundTitle: {
     color: colors.text,
     fontSize: 22,
     fontWeight: '800',
     textAlign: 'center',
   },
-
   notFoundDescription: {
     color: colors.textSecondary,
     fontSize: 15,
