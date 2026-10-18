@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   View,
@@ -41,6 +40,11 @@ type NearbyCase = {
   tags: string[];
 };
 
+type HomeScreenProps = {
+  userName: string;
+  onLogout?: () => void;
+};
+
 const urgentCases: UrgentCase[] = [
   {
     id: '1',
@@ -81,7 +85,10 @@ const nearbyCases: NearbyCase[] = [
   },
 ];
 
-export default function HomeScreen() {
+export default function HomeScreen({
+  userName,
+  onLogout,
+}: HomeScreenProps) {
   const [savedCases, setSavedCases] = useState<string[]>([]);
 
   function toggleSaved(id: string) {
@@ -93,6 +100,11 @@ export default function HomeScreen() {
   }
 
   function handleNavigation(tab: string) {
+    if (tab === 'logout') {
+      onLogout?.();
+      return;
+    }
+
     console.log('Navegação selecionada:', tab);
   }
 
@@ -110,7 +122,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.greeting}>
-          Olá, <Text style={styles.highlight}>Usuário!</Text>
+          Olá,{' '}
+          <Text style={styles.highlight}>
+            {userName.trim().split(/\s+/)[0] || 'Usuário'}!
+          </Text>
         </Text>
 
         {/* Casos urgentes */}
@@ -197,7 +212,6 @@ export default function HomeScreen() {
                     {item.title}
                   </Text>
 
-                  {/* Mesmas tags usadas nos casos próximos */}
                   <View style={styles.tagList}>
                     {item.tags.map((tag) => (
                       <AnimalTag
