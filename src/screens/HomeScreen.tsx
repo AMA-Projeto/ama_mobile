@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   ScrollView,
@@ -21,82 +22,51 @@ import { AppHeader } from '../components/layout/AppHeader';
 import { AnimalTag } from '../components/ui/AnimalTag';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { Carousel } from '../components/ui/Carousel';
+import { IconActionButton } from '../components/ui/IconActionButton';
 import { colors } from '../theme/colors';
-
-type UrgentCase = {
-  id: string;
-  title: string;
-  location: string;
-  image: string;
-  tags: string[];
-};
-
-type NearbyCase = {
-  id: string;
-  title: string;
-  description: string;
-  distance: string;
-  image: string;
-  tags: string[];
-};
+import { AnimalCase } from '../data/cases';
 
 type HomeScreenProps = {
   userName: string;
+  cases: AnimalCase[];
   onLogout?: () => void;
+  onCasePress?: (caseId: string) => void;
 };
-
-const urgentCases: UrgentCase[] = [
-  {
-    id: '1',
-    title: 'Cachorro ferido',
-    location: 'Centro',
-    image:
-      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600',
-    tags: ['Cachorro', 'Urgente'],
-  },
-  {
-    id: '2',
-    title: 'Gato abandonado',
-    location: 'Jundiaí',
-    image:
-      'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600',
-    tags: ['Gato', 'Urgente'],
-  },
-];
-
-const nearbyCases: NearbyCase[] = [
-  {
-    id: '3',
-    title: 'Cão procurando abrigo',
-    description: 'Animal encontrado próximo a uma praça.',
-    distance: '0,8 km',
-    image:
-      'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600',
-    tags: ['Cachorro', 'Urgente'],
-  },
-  {
-    id: '4',
-    title: 'Gatinho para resgate',
-    description: 'Precisa de ajuda e avaliação.',
-    distance: '1,4 km',
-    image:
-      'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=600',
-    tags: ['Gato', 'Filhote'],
-  },
-];
 
 export default function HomeScreen({
   userName,
+  cases,
   onLogout,
+  onCasePress,
 }: HomeScreenProps) {
   const [savedCases, setSavedCases] = useState<string[]>([]);
 
+  const urgentCases = cases.filter(
+    item => item.status.toLowerCase() === 'urgente',
+  );
+
+  const nearbyCases = cases.filter(
+    item => item.status.toLowerCase() !== 'urgente',
+  );
+
   function toggleSaved(id: string) {
-    setSavedCases((current) =>
+    setSavedCases(current =>
       current.includes(id)
-        ? current.filter((item) => item !== id)
+        ? current.filter(item => item !== id)
         : [...current, id],
     );
+  }
+
+  function openCase(caseId: string, title: string) {
+    if (!onCasePress) {
+      Alert.alert(
+        'Não foi possível abrir o caso',
+        'A navegação para os detalhes não está configurada.',
+      );
+      return;
+    }
+
+    onCasePress(caseId);
   }
 
   function handleNavigation(tab: string) {
@@ -147,7 +117,9 @@ export default function HomeScreen({
             onPress={() => console.log('Ver casos urgentes')}
             style={styles.seeAll}
           >
-            <Text style={styles.seeAllText}>Ver todos</Text>
+            <Text style={styles.seeAllText}>
+              Ver todos
+            </Text>
 
             <ChevronRight
               size={16}
@@ -156,91 +128,101 @@ export default function HomeScreen({
           </Pressable>
         </View>
 
-        <Carousel<UrgentCase>
-          data={urgentCases}
-          keyExtractor={(item) => item.id}
-          itemWidth={220}
-          gap={14}
-          contentContainerStyle={styles.urgentList}
-          renderItem={(item) => {
-            const isSaved = savedCases.includes(item.id);
+        {urgentCases.length > 0 ? (
+          <Carousel<AnimalCase>
+            data={urgentCases}
+            keyExtractor={item => item.id}
+            itemWidth={220}
+            gap={14}
+            contentContainerStyle={styles.urgentList}
+            renderItem={item => {
+              const isSaved = savedCases.includes(item.id);
 
-            return (
-              <View style={styles.urgentCard}>
-                <View>
-                  <Image
-                    source={{ uri: item.image }}
-                    style={styles.urgentImage}
-                    resizeMode="cover"
-                    accessibilityLabel={item.title}
-                  />
-
+              return (
+                <View style={styles.urgentCard}>
                   <Pressable
+                    onPress={() => openCase(item.id, item.title)}
                     accessibilityRole="button"
+                    accessibilityLabel={`Abrir caso: ${item.title}`}
+                    style={styles.urgentCardPressable}
+                  >
+                    <Image
+                      source={{ uri: item.images[0] }}
+                      style={styles.urgentImage}
+                      resizeMode="cover"
+                      accessibilityLabel={item.title}
+                    />
+
+                    <View style={styles.urgentInfo}>
+                      <Text
+                        style={styles.caseTitle}
+                        numberOfLines={1}
+                      >
+                        {item.title}
+                      </Text>
+
+                      <View style={styles.tagList}>
+                        {item.tags.map(tag => (
+                          <AnimalTag
+                            key={`${item.id}-${tag}`}
+                            label={tag}
+                          />
+                        ))}
+                      </View>
+
+                      <View style={styles.locationRow}>
+                        <MapPin
+                          size={14}
+                          color={colors.textSecondary}
+                        />
+
+                        <Text
+                          style={styles.locationText}
+                          numberOfLines={1}
+                        >
+                          {item.location}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+
+                  <IconActionButton
+                    icon={
+                      <Bookmark
+                        size={19}
+                        color={
+                          isSaved
+                            ? colors.primaryDark
+                            : '#333333'
+                        }
+                        fill={
+                          isSaved
+                            ? colors.primary
+                            : 'transparent'
+                        }
+                      />
+                    }
+                    onPress={() => toggleSaved(item.id)}
                     accessibilityLabel={
                       isSaved
                         ? `Remover ${item.title} dos salvos`
                         : `Salvar ${item.title}`
                     }
-                    accessibilityState={{
-                      selected: isSaved,
-                    }}
-                    onPress={() => toggleSaved(item.id)}
+                    backgroundColor="#FFFFFF"
+                    size={34}
                     style={styles.bookmarkButton}
-                  >
-                    <Bookmark
-                      size={19}
-                      color={
-                        isSaved
-                          ? colors.primaryDark
-                          : '#333333'
-                      }
-                      fill={
-                        isSaved
-                          ? colors.primary
-                          : 'transparent'
-                      }
-                    />
-                  </Pressable>
+                  />
                 </View>
+              );
+            }}
+          />
+        ) : (
+          <Text style={styles.emptyMessage}>
+            Nenhum caso urgente no momento.
+          </Text>
+        )}
 
-                <View style={styles.urgentInfo}>
-                  <Text
-                    style={styles.caseTitle}
-                    numberOfLines={1}
-                  >
-                    {item.title}
-                  </Text>
-
-                  <View style={styles.tagList}>
-                    {item.tags.map((tag) => (
-                      <AnimalTag
-                        key={`${item.id}-${tag}`}
-                        label={tag}
-                      />
-                    ))}
-                  </View>
-
-                  <View style={styles.locationRow}>
-                    <MapPin
-                      size={14}
-                      color={colors.textSecondary}
-                    />
-
-                    <Text
-                      style={styles.locationText}
-                      numberOfLines={1}
-                    >
-                      {item.location}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            );
-          }}
-        />
-
-        {/* Casos próximos */}
+        {/* Outros casos */}
         <View
           style={[
             styles.sectionHeader,
@@ -254,17 +236,19 @@ export default function HomeScreen({
             />
 
             <Text style={styles.sectionTitle}>
-              Casos Próximos
+              Outros Casos
             </Text>
           </View>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Ver todos os casos próximos"
-            onPress={() => console.log('Ver casos próximos')}
+            accessibilityLabel="Ver todos os outros casos"
+            onPress={() => console.log('Ver outros casos')}
             style={styles.seeAll}
           >
-            <Text style={styles.seeAllText}>Ver todos</Text>
+            <Text style={styles.seeAllText}>
+              Ver todos
+            </Text>
 
             <ChevronRight
               size={16}
@@ -273,65 +257,69 @@ export default function HomeScreen({
           </Pressable>
         </View>
 
-        {nearbyCases.map((item) => (
-          <Pressable
-            key={item.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Abrir caso: ${item.title}`}
-            onPress={() =>
-              console.log('Caso selecionado:', item.id)
-            }
-            style={styles.nearbyCard}
-          >
-            <Image
-              source={{ uri: item.image }}
-              style={styles.nearbyImage}
-              resizeMode="cover"
-              accessibilityLabel={item.title}
-            />
+        {nearbyCases.length > 0 ? (
+          nearbyCases.map(item => (
+            <Pressable
+              key={item.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir caso: ${item.title}`}
+              onPress={() => openCase(item.id, item.title)}
+              style={styles.nearbyCard}
+            >
+              <Image
+                source={{ uri: item.images[0] }}
+                style={styles.nearbyImage}
+                resizeMode="cover"
+                accessibilityLabel={item.title}
+              />
 
-            <View style={styles.nearbyInfo}>
-              <Text
-                style={styles.nearbyTitle}
-                numberOfLines={2}
-              >
-                {item.title}
-              </Text>
-
-              <Text
-                style={styles.description}
-                numberOfLines={2}
-              >
-                {item.description}
-              </Text>
-
-              <View style={styles.tagList}>
-                {item.tags.map((tag) => (
-                  <AnimalTag
-                    key={`${item.id}-${tag}`}
-                    label={tag}
-                  />
-                ))}
-              </View>
-
-              <View style={styles.distanceRow}>
-                <MapPin
-                  size={14}
-                  color={colors.textSecondary}
-                />
-
-                <Text style={styles.distance}>
-                  {item.distance}
+              <View style={styles.nearbyInfo}>
+                <Text
+                  style={styles.nearbyTitle}
+                  numberOfLines={2}
+                >
+                  {item.title}
                 </Text>
-              </View>
-            </View>
 
-            <ChevronRight
-              size={18}
-              color="#999999"
-            />
-          </Pressable>
-        ))}
+                <Text
+                  style={styles.description}
+                  numberOfLines={2}
+                >
+                  {item.description}
+                </Text>
+
+                <View style={styles.tagList}>
+                  {item.tags.map(tag => (
+                    <AnimalTag
+                      key={`${item.id}-${tag}`}
+                      label={tag}
+                    />
+                  ))}
+                </View>
+
+                <View style={styles.distanceRow}>
+                  <MapPin
+                    size={14}
+                    color={colors.textSecondary}
+                  />
+
+                  <Text style={styles.distance}>
+                    {item.distance}
+                  </Text>
+                </View>
+              </View>
+
+              <ChevronRight
+                size={18}
+                color="#999999"
+              />
+            </Pressable>
+          ))
+        ) : (
+          <Text style={styles.emptyMessage}>
+            Não há outros casos cadastrados no momento.
+          </Text>
+        )}
       </ScrollView>
 
       <BottomNavigation
@@ -412,6 +400,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
+  urgentCardPressable: {
+    width: '100%',
+  },
+
   urgentImage: {
     width: '100%',
     height: 130,
@@ -422,12 +414,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 9,
     top: 9,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 2,
   },
 
   urgentInfo: {
@@ -509,5 +496,11 @@ const styles = StyleSheet.create({
   distance: {
     fontSize: 11,
     color: colors.textSecondary,
+  },
+
+  emptyMessage: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    paddingVertical: 12,
   },
 });

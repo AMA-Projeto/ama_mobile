@@ -4,11 +4,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import CaseDetailsScreen from './src/screens/CaseDetailsScreen';
 
 import { SuccessPopup } from './src/components/ui/SuccessPopup';
 import { ErrorPopup } from './src/components/ui/ErrorPopup';
+import { initialCases, AnimalCase } from './src/data/cases';
 
-type Screen = 'login' | 'register' | 'home';
+type Screen = 'login' | 'register' | 'home' | 'caseDetails';
 
 type User = {
   name: string;
@@ -18,9 +20,17 @@ type User = {
 };
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('login');
+  const [currentScreen, setCurrentScreen] =
+    useState<Screen>('login');
+
   const [users, setUsers] = useState<User[]>([]);
   const [userName, setUserName] = useState('');
+
+  const [cases, setCases] =
+    useState<AnimalCase[]>(initialCases);
+
+  const [selectedCaseId, setSelectedCaseId] =
+    useState<string | null>(null);
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -33,20 +43,20 @@ export default function App() {
     const normalizedPhone = data.phone.replace(/\D/g, '');
 
     const emailExists = users.some(
-      user => user.email.trim().toLowerCase() === normalizedEmail
+      user => user.email.trim().toLowerCase() === normalizedEmail,
     );
 
     const phoneExists = users.some(
-      user => user.phone.replace(/\D/g, '') === normalizedPhone
+      user => user.phone.replace(/\D/g, '') === normalizedPhone,
     );
 
-   if (emailExists || phoneExists) {
-     setErrorMessage(
-       'Esse e-mail ou esse telefone já estão cadastrados.'
+    if (emailExists || phoneExists) {
+      setErrorMessage(
+        'Esse e-mail ou esse telefone já estão cadastrados.',
       );
-     setShowErrorPopup(true);
-     return;
-   }
+      setShowErrorPopup(true);
+      return;
+    }
 
     setUsers(currentUsers => [
       ...currentUsers,
@@ -71,7 +81,7 @@ export default function App() {
     const user = users.find(
       registeredUser =>
         registeredUser.email === normalizedEmail &&
-        registeredUser.password === data.password
+        registeredUser.password === data.password,
     );
 
     if (!user) {
@@ -85,6 +95,7 @@ export default function App() {
 
   function handleLogout() {
     setUserName('');
+    setSelectedCaseId(null);
     setCurrentScreen('login');
   }
 
@@ -98,6 +109,20 @@ export default function App() {
     setCurrentScreen('login');
   }
 
+  function handleOpenCase(caseId: string) {
+    setSelectedCaseId(caseId);
+    setCurrentScreen('caseDetails');
+  }
+
+  function handleBackToHome() {
+    setCurrentScreen('home');
+  }
+
+  // Preparado para receber novos casos da futura tela de cadastro.
+  function handleAddCase(newCase: AnimalCase) {
+    setCases(currentCases => [newCase, ...currentCases]);
+  }
+
   return (
     <SafeAreaProvider>
       {currentScreen === 'login' && (
@@ -105,7 +130,7 @@ export default function App() {
           onRegisterPress={handleOpenRegister}
           onForgotPasswordPress={() =>
             console.log(
-              'Recuperação de senha ainda não implementada.'
+              'Recuperação de senha ainda não implementada.',
             )
           }
           onLogin={handleLogin}
@@ -122,9 +147,20 @@ export default function App() {
       {currentScreen === 'home' && (
         <HomeScreen
           userName={userName}
+          cases={cases}
           onLogout={handleLogout}
+          onCasePress={handleOpenCase}
         />
       )}
+
+      {currentScreen === 'caseDetails' &&
+        selectedCaseId !== null && (
+          <CaseDetailsScreen
+            caseId={selectedCaseId}
+            cases={cases}
+            onBack={handleBackToHome}
+          />
+        )}
 
       <SuccessPopup
         visible={showSuccess && currentScreen === 'login'}
@@ -134,7 +170,9 @@ export default function App() {
       />
 
       <ErrorPopup
-        visible={showErrorPopup && currentScreen === 'register'}
+        visible={
+          showErrorPopup && currentScreen === 'register'
+        }
         message={errorMessage}
         onClose={() => setShowErrorPopup(false)}
       />

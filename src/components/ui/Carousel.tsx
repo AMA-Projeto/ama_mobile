@@ -4,6 +4,7 @@ import type { ReactNode, ComponentRef } from 'react';
 import {
   ScrollView,
   View,
+  Pressable,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type StyleProp,
@@ -32,9 +33,6 @@ export function Carousel<T>({
 
   const itemSize = itemWidth + gap;
   const cycleWidth = data.length * itemSize;
-
-  // Três cópias permitem deslizar continuamente
-  // entre os casos.
   const carouselData = [...data, ...data, ...data];
 
   function handleContentSizeChange() {
@@ -44,7 +42,6 @@ export function Carousel<T>({
 
     initialPositionSet.current = true;
 
-    // Começa na cópia central dos itens.
     scrollRef.current?.scrollTo({
       x: cycleWidth,
       animated: false,
@@ -57,13 +54,11 @@ export function Carousel<T>({
     const offsetX = event.nativeEvent.contentOffset.x;
 
     if (offsetX < cycleWidth - itemSize / 2) {
-      // Reposiciona na cópia equivalente à frente.
       scrollRef.current?.scrollTo({
         x: offsetX + cycleWidth,
         animated: false,
       });
     } else if (offsetX >= cycleWidth * 2 - itemSize / 2) {
-      // Reposiciona na cópia equivalente anterior.
       scrollRef.current?.scrollTo({
         x: offsetX - cycleWidth,
         animated: false,
