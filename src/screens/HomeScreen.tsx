@@ -31,6 +31,7 @@ type HomeScreenProps = {
   cases: AnimalCase[];
   onLogout?: () => void;
   onCasePress?: (caseId: string) => void;
+  onAddCasePress?: () => void;
 };
 
 export default function HomeScreen({
@@ -38,9 +39,11 @@ export default function HomeScreen({
   cases,
   onLogout,
   onCasePress,
+  onAddCasePress,
 }: HomeScreenProps) {
   const [savedCases, setSavedCases] = useState<string[]>([]);
 
+  // Casos urgentes e demais casos vêm da lista compartilhada.
   const urgentCases = cases.filter(
     item => item.status.toLowerCase() === 'urgente',
   );
@@ -57,7 +60,7 @@ export default function HomeScreen({
     );
   }
 
-  function openCase(caseId: string, title: string) {
+  function openCase(caseId: string) {
     if (!onCasePress) {
       Alert.alert(
         'Não foi possível abrir o caso',
@@ -72,6 +75,19 @@ export default function HomeScreen({
   function handleNavigation(tab: string) {
     if (tab === 'logout') {
       onLogout?.();
+      return;
+    }
+
+    if (tab === 'create') {
+      if (!onAddCasePress) {
+        Alert.alert(
+          'Cadastro indisponível',
+          'A navegação para adicionar um caso ainda não está configurada.',
+        );
+        return;
+      }
+
+      onAddCasePress();
       return;
     }
 
@@ -141,7 +157,7 @@ export default function HomeScreen({
               return (
                 <View style={styles.urgentCard}>
                   <Pressable
-                    onPress={() => openCase(item.id, item.title)}
+                    onPress={() => openCase(item.id)}
                     accessibilityRole="button"
                     accessibilityLabel={`Abrir caso: ${item.title}`}
                     style={styles.urgentCardPressable}
@@ -263,7 +279,7 @@ export default function HomeScreen({
               key={item.id}
               accessibilityRole="button"
               accessibilityLabel={`Abrir caso: ${item.title}`}
-              onPress={() => openCase(item.id, item.title)}
+              onPress={() => openCase(item.id)}
               style={styles.nearbyCard}
             >
               <Image

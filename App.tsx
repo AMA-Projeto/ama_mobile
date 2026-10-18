@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import CaseDetailsScreen from './src/screens/CaseDetailsScreen';
-
 import { SuccessPopup } from './src/components/ui/SuccessPopup';
 import { ErrorPopup } from './src/components/ui/ErrorPopup';
 import { initialCases, AnimalCase } from './src/data/cases';
+import AddCaseScreen from './src/screens/AddCaseScreen';
 
-type Screen = 'login' | 'register' | 'home' | 'caseDetails';
+type Screen = 'login' | 'register' | 'home' | 'caseDetails' | 'addCase';
 
 type User = {
   name: string;
@@ -121,6 +120,11 @@ export default function App() {
   // Preparado para receber novos casos da futura tela de cadastro.
   function handleAddCase(newCase: AnimalCase) {
     setCases(currentCases => [newCase, ...currentCases]);
+    setCurrentScreen('home');
+  }
+
+  function handleOpenAddCase() {
+    setCurrentScreen('addCase');
   }
 
   return (
@@ -150,6 +154,15 @@ export default function App() {
           cases={cases}
           onLogout={handleLogout}
           onCasePress={handleOpenCase}
+          onAddCasePress={handleOpenAddCase}
+        />
+      )}
+
+      {currentScreen === 'addCase' && (
+        <AddCaseScreen
+          userName={userName}
+          onBack={handleBackToHome}
+          onSubmit={handleAddCase}
         />
       )}
 
